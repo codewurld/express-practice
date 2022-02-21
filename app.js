@@ -14,9 +14,9 @@ app.get('/', (req, res) => {
     res.send("Hello there");
 })
 
-app.get('/api/courses', (req, res) => {
-    res.send([1, 2, "DFS"]);
-})
+// app.get('/api/courses', (req, res) => {
+//     res.send([1, 2, "DFS"]);
+// })
 
 // app.get('/api/course/:year/:id', (req, res) => {
 //     res.send(req.params);
@@ -26,7 +26,14 @@ app.get('/api/course/:year/:id', (req, res) => {
     res.send(req.query);
 })
 
-app.get('/api/course/:id', (req, res) => {
+app.get('/api/courses/', (req, res) => {
+    // const course = courses.find(course => course.id === parseInt(req.params.id));
+    // if (!course) res.status(404).send("This course doesn't exist");
+    res.send(courses);
+
+})
+
+app.get('/api/courses/:id', (req, res) => {
     const course = courses.find(course => course.id === parseInt(req.params.id));
     if (!course) res.status(404).send("This course doesn't exist");
     res.send(course);
@@ -35,21 +42,10 @@ app.get('/api/course/:id', (req, res) => {
 
 app.post('/api/courses', (req, res) => {
     // input validation
+    const { error } = validateCourse(req.body)
 
-    const schema = Joi.object({
-        name: Joi.string().min(4).required()
-    })
-
-
-    const result = schema.validate(req.body);
-
-
-    // schema.validate({ username: 'abc', birth_year: 1994 });
-
-    console.log(result);
-
-    if (result.error) {
-        res.status(400).send(result.error.details[0].message);
+    if (error) {
+        res.status(400).send(error.details[0].message);
         return;
     }
 
@@ -59,11 +55,35 @@ app.post('/api/courses', (req, res) => {
     }
     courses.push(course);
     res.send(course);
+})
 
+// update
+app.put('/api/courses/:id', (req, res) => {
+    // find course
+    const course = courses.find(course => course.id === parseInt(req.params.id));
+
+    if (!course) res.status(404).send("Course doesn't exist")
+
+    // validate course
+    const { error } = validateCourse(req.body)
+
+    if (error) {
+        res.status(400).send(error.details[0].message);
+        return;
+    }
+    // update course
+    course.name = req.body.name;
+    res.send(course)
 
 })
 
+const validateCourse = (course) => {
+    const schema = Joi.object({
+        name: Joi.string().min(4).required()
+    })
 
+    return schema.validate(course);
+}
 
 const port = process.env.PORT || 5000;
 
